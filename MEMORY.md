@@ -30,7 +30,8 @@
 ## Memory plugin status
 - 已安装并启用 `memory-lancedb-pro`（slot 已切换）。
 - 关键运维规则：`JINA_API_KEY` 必须放在 `~/.openclaw/.env` 并重启 Gateway，避免服务进程读不到变量。
-- 当前发现：插件 embedding 写入出现 `422`，未完全打通前，关键记忆继续双写到 `MEMORY.md` 与 `memory/YYYY-MM-DD.md`。
+- 2026-03-02 已完成修复：补装 `@lancedb/lancedb-darwin-x64` 后，`memory_store` + `memory_recall` 验收通过。
+- 当前策略：以插件记忆为主；`MEMORY.md` 与 `memory/YYYY-MM-DD.md` 改为关键事项备份，不再默认双写。
 
 ## LanceDB Pro 操作铁律（摘录）
 - Rule 6（双层记忆存储）
