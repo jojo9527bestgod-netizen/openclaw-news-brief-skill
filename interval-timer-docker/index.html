@@ -124,32 +124,50 @@
       roundEl.textContent = `第 1 / ${Number(roundsInput.value) || 5} 组`;
     }
 
+    function cue(type) {
+      // 更明显的提示音：训练开始/结束、休息开始/结束
+      if (type === 'work-start') { beep(980, 140); setTimeout(() => beep(1280, 140), 170); }
+      else if (type === 'work-end') { beep(640, 180); }
+      else if (type === 'rest-start') { beep(720, 140); setTimeout(() => beep(720, 140), 170); }
+      else if (type === 'rest-end') { beep(920, 180); }
+      else if (type === 'done') { beep(880, 120); setTimeout(() => beep(1040, 120), 140); setTimeout(() => beep(1320, 160), 300); }
+
+      if (navigator.vibrate) {
+        if (type === 'done') navigator.vibrate([120, 70, 120, 70, 180]);
+        else navigator.vibrate(80);
+      }
+    }
+
     function tick() {
       if (remain > 0) {
         remain -= 1;
-        if (remain <= 3 && remain > 0) beep(1200, 90);
         render();
         return;
       }
 
       if (isWork) {
-        beep(650, 220);
+        // 训练结束 -> 休息开始
+        cue('work-end');
         isWork = false;
         remain = Number(restInput.value) || 20;
+        cue('rest-start');
         render();
       } else {
-        beep(950, 240);
+        // 休息结束 -> 下一组训练开始 / 全部结束
+        cue('rest-end');
         const totalRounds = Number(roundsInput.value) || 5;
         if (currentRound >= totalRounds) {
           clearInterval(timer);
           isRunning = false;
           phaseEl.textContent = '完成 🎉';
           timeEl.textContent = '0';
+          cue('done');
           return;
         }
         currentRound += 1;
         isWork = true;
         remain = Number(workInput.value) || 40;
+        cue('work-start');
         render();
       }
     }
@@ -162,10 +180,13 @@
       if (ctx && ctx.state === 'suspended') {
         try { await ctx.resume(); } catch (_) {}
       }
-      // 给一个很短的提示音，确认声音链路正常
-      beep(1000, 80);
 
-      if (!timer) render();
+      if (!timer) {
+        // 第一次开始时提示“训练开始”
+        cue('work-start');
+        render();
+      }
+
       isRunning = true;
       timer = setInterval(tick, 1000);
     });
