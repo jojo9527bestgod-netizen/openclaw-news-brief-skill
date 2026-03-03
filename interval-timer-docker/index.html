@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HIIT 计时器</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background:#111827; color:#fff; }
+    .wrap { max-width: 560px; margin: 40px auto; padding: 24px; }
+    .card { background:#1f2937; border-radius:16px; padding:24px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    h1 { margin:0 0 12px; font-size: 26px; }
+    .muted { color:#9ca3af; margin-bottom:18px; }
+    .grid { display:grid; grid-template-columns: repeat(3,1fr); gap:12px; margin-bottom:16px; }
+    label { font-size: 12px; color:#9ca3af; display:block; margin-bottom:6px; }
+    input { width:100%; box-sizing:border-box; border:none; border-radius:10px; padding:10px 12px; font-size:16px; background:#111827; color:#fff; }
+    .phase { text-align:center; font-size: 22px; font-weight:700; margin: 10px 0; }
+    .time { text-align:center; font-size: 78px; font-weight: 800; letter-spacing:1px; margin: 8px 0 6px; }
+    .round { text-align:center; color:#93c5fd; margin-bottom:16px; }
+    .actions { display:flex; gap:10px; }
+    button { flex:1; border:none; border-radius:12px; padding:12px; font-size:16px; font-weight:600; cursor:pointer; }
+    .start { background:#10b981; color:#06261d; }
+    .pause { background:#f59e0b; color:#2b1b00; }
+    .reset { background:#ef4444; color:#2b0000; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>运动间歇计时器</h1>
+      <div class="muted">默认：训练 40 秒 → 休息 20 秒，共 5 组</div>
+
+      <div class="grid">
+        <div>
+          <label>训练(秒)</label>
+          <input id="workSec" type="number" min="1" value="40" />
+        </div>
+        <div>
+          <label>休息(秒)</label>
+          <input id="restSec" type="number" min="1" value="20" />
+        </div>
+        <div>
+          <label>组数</label>
+          <input id="rounds" type="number" min="1" value="5" />
+        </div>
+      </div>
+
+      <div id="phase" class="phase">准备开始</div>
+      <div id="time" class="time">40</div>
+      <div id="round" class="round">第 1 / 5 组</div>
+
+      <div class="actions">
+        <button class="start" id="startBtn">开始</button>
+        <button class="pause" id="pauseBtn">暂停</button>
+        <button class="reset" id="resetBtn">重置</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const workInput = document.getElementById('workSec');
+    const restInput = document.getElementById('restSec');
+    const roundsInput = document.getElementById('rounds');
+    const phaseEl = document.getElementById('phase');
+    const timeEl = document.getElementById('time');
+    const roundEl = document.getElementById('round');
+
+    let timer = null;
+    let isRunning = false;
+    let currentRound = 1;
+    let isWork = true;
+    let remain = Number(workInput.value);
+
+    function beep(freq = 880, ms = 180) {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + ms / 1000);
+      osc.stop(ctx.currentTime + ms / 1000);
+    }
+
+    function render() {
+      const totalRounds = Number(roundsInput.value) || 1;
+      phaseEl.textContent = isWork ? '训练中' : '休息中';
+      timeEl.textContent = String(remain);
+      roundEl.textContent = `第 ${Math.min(currentRound, totalRounds)} / ${totalRounds} 组`;
+    }
+
+    function resetState() {
+      isRunning = false;
+      clearInterval(timer);
+      timer = null;
+      currentRound = 1;
+      isWork = true;
+      remain = Number(workInput.value) || 40;
+      phaseEl.textContent = '准备开始';
+      timeEl.textContent = String(remain);
+      roundEl.textContent = `第 1 / ${Number(roundsInput.value) || 5} 组`;
+    }
+
+    function tick() {
+      if (remain > 0) {
+        remain -= 1;
+        if (remain <= 3 && remain > 0) beep(1200, 90);
+        render();
+        return;
+      }
+
+      if (isWork) {
+        beep(650, 220);
+        isWork = false;
+        remain = Number(restInput.value) || 20;
+        render();
+      } else {
+        beep(950, 240);
+        const totalRounds = Number(roundsInput.value) || 5;
+        if (currentRound >= totalRounds) {
+          clearInterval(timer);
+          isRunning = false;
+          phaseEl.textContent = '完成 🎉';
+          timeEl.textContent = '0';
+          return;
+        }
+        currentRound += 1;
+        isWork = true;
+        remain = Number(workInput.value) || 40;
+        render();
+      }
+    }
+
+    document.getElementById('startBtn').addEventListener('click', () => {
+      if (isRunning) return;
+      if (!timer) render();
+      isRunning = true;
+      timer = setInterval(tick, 1000);
+    });
+
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      isRunning = false;
+      clearInterval(timer);
+      timer = null;
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', resetState);
+
+    [workInput, restInput, roundsInput].forEach(el => {
+      el.addEventListener('change', () => {
+        if (!isRunning) resetState();
+      });
+    });
+
+    resetState();
+  </script>
+</body>
+</html>
