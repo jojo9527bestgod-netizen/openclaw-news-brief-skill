@@ -33,7 +33,7 @@
       <div class="grid">
         <div>
           <label>训练(秒)</label>
-          <input id="workSec" type="number" min="1" value="40" />
+          <input id="workSec" type="number" min="1" value="50" />
         </div>
         <div>
           <label>休息(秒)</label>
@@ -118,7 +118,7 @@
       timer = null;
       currentRound = 1;
       isWork = true;
-      remain = Number(workInput.value) || 40;
+      remain = Number(workInput.value) || 50;
       phaseEl.textContent = '准备开始';
       timeEl.textContent = String(remain);
       roundEl.textContent = `第 1 / ${Number(roundsInput.value) || 5} 组`;
@@ -166,7 +166,7 @@
         }
         currentRound += 1;
         isWork = true;
-        remain = Number(workInput.value) || 40;
+        remain = Number(workInput.value) || 50;
         cue('work-start');
         render();
       }
