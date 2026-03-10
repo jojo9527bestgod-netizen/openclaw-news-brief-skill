@@ -1,0 +1,7 @@
+services:
+  hiit-timer:
+    build: .
+    container_name: hiit-timer
+    ports:
+      - "8088:80"
+    restart: unless-stopped
