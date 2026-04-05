@@ -55,6 +55,49 @@ Tavily 搜索 → 候选池 → 权威源核验 → 去重/筛选 → 输出 15 
 - 需要更严格可靠性时：对关键条目启用双源核验
 - 需要发布到内容平台时：可在此基础上再做口语化改写
 
+## ⚠️ 常见问题：DuckDuckGo 搜索被拦截
+
+如果运行时报 `DuckDuckGo returned a bot-detection challenge`，说明 OpenClaw 的默认搜索用的是 DuckDuckGo，但被检测为机器人请求。
+
+### 解决方法：配置 Tavily 搜索
+
+在 OpenClaw 全局配置 `~/.openclaw/openclaw.json` 中做两处修改：
+
+**1. 添加 Tavily 插件**
+```json
+"plugins": {
+  "entries": {
+    "tavily": {
+      "enabled": true,
+      "config": {
+        "webSearch": {
+          "apiKey": "tvly-你的APIKey",
+          "baseUrl": "https://api.tavily.com"
+        }
+      }
+    }
+  }
+}
+```
+
+**2. 将默认搜索切换为 Tavily**
+```json
+"tools": {
+  "web": {
+    "search": {
+      "provider": "tavily"
+    }
+  }
+}
+```
+
+然后重启 OpenClaw Gateway：
+```bash
+openclaw gateway restart
+```
+
+Tavily 有免费额度（每月1000次），注册地址：https://tavily.com
+
 ## 分支说明
 
 - 当前主分支：`main`
