@@ -6,13 +6,27 @@
 
 - 总条数固定：15 条
 - 覆盖范围：国内与国际都要覆盖（默认国内 8 条 + 国际 7 条，可按提示词调整）
-- 输出结构（每条固定三段）：
-  - 【标题】
-  - 【发生了什么】
-  - 【影响/看点】
+- 每条固定四段：序号（【1·国内】~【15·国际】）、标题、发生了什么、影响/看点
 - 支持“昨日窗口”模式（北京时间前一日 00:00-23:59）
 - 结尾自动附带统一声明
 - 支持检索异常时的“单源快报版”回退策略
+
+## 输出格式（带序号）
+
+```
+【1·国内】【新闻标题】
+【发生了什么（1-2句）】
+【影响/看点（1句）】
+【2·国内】【新闻标题】
+……
+【8·国内】【新闻标题】
+……
+【9·国际】【新闻标题】
+……
+【15·国际】【新闻标题】
+
+以上基于公开可核验信源整理，后续以官方最新通报为准。
+```
 
 ## 当前检索链路
 
@@ -97,6 +111,42 @@ openclaw gateway restart
 ```
 
 Tavily 有免费额度（每月1000次），注册地址：https://tavily.com
+
+## ⚠️ 常见问题：MiniMax 模型超时（LLM idle timeout / Request timed out）
+
+如果日志中报错 `LLM idle timeout (60s)` 或 `Request timed out before a response was generated`，说明模型在推理模式下生成内容太慢，超出了默认超时限制。
+
+### 解决方法：关闭推理思考 + 增大超时
+
+在 OpenClaw 全局配置 `~/.openclaw/openclaw.json` 中：
+
+**1. 在 `agents.defaults` 中添加以下配置**
+```json
+"agents": {
+  "defaults": {
+    "timeoutSeconds": 300,
+    "thinkingDefault": "off",
+    "models": {
+      "minimax/MiniMax-M2.7": {
+        "params": {
+          "thinking": "off"
+        }
+      }
+    }
+  }
+}
+```
+
+**2. 重启 Gateway**
+```bash
+openclaw gateway restart
+```
+
+### 说明
+
+- `timeoutSeconds: 300`：将单次任务超时从默认 120 秒延长到 300 秒
+- `thinkingDefault: "off"`：关闭推理思考模式，生成速度更快
+- `models["minimax/MiniMax-M2.7"].params.thinking: "off"`：对 MiniMax-M2.7 模型单独关闭推理
 
 ## 分支说明
 
